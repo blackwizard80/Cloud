@@ -1,0 +1,2805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Cloud Web</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Dancing+Script:wght@400..700&family=Great+Vibes&display=swap" rel="stylesheet">
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+
+
+<style>
+:root {
+  /* Default Dark Theme (මෙය ආරම්භයේදී පවතින වර්ණ වේ) */
+  --bg-color: #111;
+  --text-color: #fff;
+  --online-bar-bg: #444;
+  --me-bubble-bg: #0066ff;
+  --not-me-bubble-bg: #444;
+  --reply-text-color: #ccc;
+  --input-bg-color: #fff;
+  --input-text-color: #000;
+  --send-bar-bg: #aaa;
+  --button-color: #444;
+  --button-hover-color: #555;
+  --bubble-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+body { margin:0; padding:0; background:var(--bg-color); color:var(--text-color); font-family:Arial, sans-serif;   transition: background 1s ease; overflow-x: hidden; 
+    width: 100%;}
+#loginPage { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:var(--bg-color); }
+#onlineUsers,#messages,#sendMsg { display:none; }
+#onlineUsers { position:fixed; top:0; left:0; width:100%; height:50px; background:var(--online-bar-bg); padding:10px; box-sizing:border-box; overflow-x:auto; white-space:nowrap; z-index:100; }
+#messages { position:fixed; top:50px; left:0; width:100%; height:calc(100% - 170px); overflow-y:auto; padding:10px; box-sizing:border-box; }
+#sendMsg { position:fixed; bottom:0; left:0; width:100%; background:var(--send-bar-bg); display:flex; flex-direction:column; align-items:center; padding:10px; box-sizing:border-box; }
+#replyContext { width:100%; background:var(--online-bar-bg); color:var(--text-color); padding:5px; margin-bottom:5px; border-radius:5px; display:none; 
+transform: scaleY(1);
+    transform-origin: top;
+    animation: slideDownIn 0.3s ease-out; }
+#msgTxt { width:100%; height:40px; margin-bottom:10px; padding:10px; border:none; border-radius:5px; font-size:16px; box-sizing:border-box; background:var(--input-bg-color); color:var(--input-text-color); }
+#msgBtn,#imgUploadBtn,#startRec,#stopRec { flex:1; height:40px; margin:5px 2px; background:var(--button-color); color:var(--input-bg-color); border:none; border-radius:5px; cursor:pointer; transition: background 0.2s ease;
+}
+#msgBtn:hover,
+#imgUploadBtn:hover { background:var(--button-hover-color);
+}
+#stopRec:hover {
+    background: #cc0000; /* Dark Red on hover */
+}
+.outer { display:flex; margin-bottom:10px; animation: fadeInSlide 0.4s ease-out; }
+.me { background:var(--me-bubble-bg); color:var(--text-color); padding:10px; border-radius:10px; max-width:60%; text-align:right; margin-left:auto; animation: popInBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word; }
+.notMe { background:var(--not-me-bubble-bg); color:var(--text-color); padding:10px; border-radius:10px; max-width:60%; text-align:left; margin-right:auto; animation: popInBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;}
+.imageMsg { max-width:100%; border-radius:10px; display:block; margin-top:5px; }
+audio { margin-top:5px; max-width:100%; }
+.time { font-size:0.8em; color:var(--reply-text-color); margin-top:5px; text-align:right; }
+.me:hover, .notMe:hover {
+    transform: translateY(-2px); /* 2px ඉහළට එසවීම */
+    box-shadow: var(--bubble-shadow); /* අඳුරු සෙවනැල්ලක් */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.delete-btn,.reply-btn { display:inline-block; margin-top:5px; padding:5px; border:none; border-radius:5px; font-size:0.8em; cursor:pointer; }
+.delete-btn { background:#ff4d4d; color:#fff; }
+/* New CSS rule for hover state */
+.delete-btn:hover {
+    animation: jiggle 0.3s ease-in-out 2; /* 0.3s ඇතුලත දෙවරක් සෙලවෙනවා */
+}
+
+.reply-btn { background:#007bff; color:#fff; }
+#messages::-webkit-scrollbar { width:8px; }
+#messages::-webkit-scrollbar-thumb { background:#444; border-radius:4px; }
+
+/* Typing indicator bubble */
+#typingIndicator {
+display:none;
+padding:8px 12px;
+margin:5px;
+background:var(--online-bar-bg);
+border-radius:15px;
+font-size:14px;
+color:var(--reply-text-color);
+width:fit-content;
+animation: fadeIn 0.3s ease;
+position: fixed;
+top: 60px;
+left: 12px;
+z-index: 150;
+}
+.typing-text::after {
+content: "";
+animation: dots 1.5s steps(4, end) infinite;
+}
+@keyframes dots {
+0%   { content:""; }
+25%  { content:"."; }
+50%  { content:".."; }
+75%  { content:"..."; }
+100% { content:""; }
+}
+@keyframes fadeIn {
+from {opacity:0;}
+to {opacity:1;}
+}
+
+/* Last seen bubble */
+#lastSeenBubble {
+position: fixed;
+top: 8px;
+right: 8px;
+background: #007bff;
+color: #fff;
+font-size: 20px;
+width: 42px;
+height: 42px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+z-index: 200;
+box-shadow: 0 0 10px rgba(0,0,0,0.3);
+transition: transform 0.2s ease;
+animation: spin 8s linear infinite;
+}
+#lastSeenBubble:hover { transform: scale(1.1); animation-duration: 1s; }
+
+#lastSeenPopup {
+display: none;
+position: fixed;
+top: 60px;
+right: 8px;
+background: #111;
+color: #fff;
+border-radius: 10px;
+padding: 10px;
+width: 250px;
+max-height: 300px;
+overflow-y: auto;
+box-shadow: 0 0 15px rgba(0,0,0,0.4);
+z-index: 300;
+}
+#lastSeenPopup h3 { margin: 0 0 10px; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+#lastSeenPopup::-webkit-scrollbar { width: 6px; }
+#lastSeenPopup::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+
+/* New Image Bubble */
+#imageBubble {
+position: fixed;
+top: 60px;
+right: 8px;
+background: #28a745;
+color: #fff;
+font-size: 20px;
+width: 42px;
+height: 42px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+z-index: 210;
+box-shadow: 0 0 10px rgba(0,0,0,0.3);
+transition: transform 0.2s ease;
+}
+#imageBubble:hover { transform: scale(1.1); }
+
+/* Image popup */
+#imagePopup {
+display: none;
+position: fixed;
+top: 120px;
+right: 8px;
+width: 300px;
+height: 400px;
+background: #111;
+border-radius: 10px;
+overflow: hidden;
+z-index: 220;
+box-shadow: 0 0 15px rgba(0,0,0,0.4);
+}
+#imagePopup iframe { width: 100%; height: 100%; border: none; }
+#imagePopupClose {
+position:absolute; top:5px; right:5px;
+background:#ff4d4d; border:none; color:#fff; padding:3px 6px; border-radius:5px; cursor:pointer;
+z-index: 230;
+}
+/* 💑 Love Bubble */
+#loveBubble {
+  position: fixed;
+  top: 60px;
+  right: 60px;
+  background: #ff1493;
+  color: #fff;
+  font-size: 24px;      /* icon size */
+  width: 42px;
+  height: 42px;
+  line-height: 42px;    /* ❤️ important */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;   /* extra safety */
+  cursor: pointer;
+  z-index: 210;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease;
+  animation: heartbeat 2s infinite ease-in-out;
+}
+#loveBubble:hover { transform: scale(1.1); }
+
+/* Emoji Popup */
+#emojiPopup {
+  display: none;
+  position: fixed;
+  top: 120px;
+  right: 60px;
+  background: #111;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  width: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  z-index: 220;
+}
+#emojiPopup h3 { margin-top:0; margin-bottom:10px; font-size:16px; }
+
+/* Emoji Row */
+.emojiRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.emojiBtn {
+  background:#444;
+  color:#fff;
+  border:none;
+  padding:3px 6px;
+  border-radius:4px;
+  cursor:pointer;
+  font-size:0.9em;
+}
+
+/* Emoji Rain */
+#emojiRainContainer {
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  pointer-events:none;
+  z-index:50;
+}
+.emojiDrop {
+  position:absolute;
+  font-size:24px;
+  user-select:none;
+  animation: fall linear infinite;
+}
+@keyframes fall {
+  0% { transform: translateY(-50px); opacity:1; }
+  100% { transform: translateY(100vh); opacity:0.7; }
+}
+@keyframes fadeInSlide {
+  0% { 
+    opacity: 0; 
+    transform: translateY(15px); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+@keyframes popInBounce {
+  0% { 
+    transform: scale(0.8);
+    opacity: 0; 
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% { 
+    transform: scale(1);
+    opacity: 1; 
+  }
+}
+/* Heartbeat Animation */
+@keyframes heartbeat {
+  0% { transform: scale(1); }
+  20% { transform: scale(1.1); }
+  40% { transform: scale(1); }
+  60% { transform: scale(1.15); }
+  80% { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+/* Spin Animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+/* Pulse Effect for Media */
+@keyframes mediaPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); } /* 2% කින් විශාල වෙනවා */
+  100% { transform: scale(1); }
+}
+
+/* New CSS class for image/audio elements */
+.mediaMsgPulse {
+    animation: mediaPulse 1.5s ease-in-out 2; 
+}
+/* Style කොටසට එකතු කරන්න */
+
+/* Login Button Click Animation */
+#loginBtn:active {
+    transform: scale(0.98); /* 2% කින් කුඩා වෙනවා */
+    box-shadow: 0 0 5px rgba(0, 102, 255, 0.5); /* Shadow එකක් දානවා */
+    transition: transform 0.1s ease-out;
+}
+
+/* Jiggle/Shake effect for Delete button */
+@keyframes jiggle {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-3px); }
+  40%, 80% { transform: translateX(3px); }
+}
+/* #startRec CSS එකට එකතු කරන්න */
+#startRec:hover {
+    background: #008000; /* Dark Green on hover */
+}
+/* Style කොටසට එකතු කරන්න */
+.me:hover, .notMe:hover {
+    transform: translateY(-2px); /* 2px ඉහළට එසවීම */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* අඳුරු සෙවනැල්ලක් */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+@keyframes slideDownIn {
+    from { 
+        transform: scaleY(0); 
+        opacity: 0; 
+    }
+    to { 
+        transform: scaleY(1); 
+        opacity: 1; 
+    }
+}
+/* 🙈 Theme Bubble (New CSS) */
+#themeBubble {
+  position: fixed;
+  top: 112px; /* Love Bubble (60px) වලට යටින් තැබීමට, Image Bubble එකට සමාන උසකින් */
+  right: 60px; /* Love Bubble එකේ (right: 60px) වමට තැබීමට 60px භාවිතා කරන්න */
+  background: #ff5722; /* Orange color for the bubble */
+  color: #fff;
+  font-size: 20px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 215; /* අනෙකුත් Bubbles වලට වඩා ඉහළින් තබමු */
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease;
+}
+#themeBubble:hover { transform: scale(1.1); }
+
+/* Theme Popup (New CSS) */
+#themePopup {
+  display: none;
+  position: fixed; /* <-- මෙය අනිවාර්යයි! Popup එක නිවැරදි තැනක තැබීමට */
+  top: 160px; /* Bubble එකට යටින් පෙන්වීමට */
+  right: 60px;
+  background: #111;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  width: 200px;
+  max-height: 400px; 
+  overflow-y: auto;
+  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  z-index: 225;
+}
+.colorThemeRow { /* Theme List එකේ පෙනුම */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 5px;
+  border-radius: 5px;
+  transition: background 0.2s;
+}
+.colorThemeRow:hover {
+    background: #222;
+}
+.themeToggleBtn {
+  background: #444;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-size: 0.9em;
+}
+/* 🛑 Theme Popup Scrollbar Styles */
+#themePopup::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* ⭐ Reaction Popup - Screen මැදට ගෙන ඒම සඳහා යාවත්කාලීන කරන ලදී */
+#reactionPopup {
+    display: none;
+    position: fixed; 
+    top: 50%;        
+    left: 50%;       
+    transform: translate(-50%, -50%); 
+    background: #fff; 
+    border-radius: 20px; 
+    padding: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 350; 
+}
+.reaction-emoji {
+    font-size: 28px; /* Emoji ටිකක් ලොකු කරයි */
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+.reaction-emoji:hover {
+    transform: scale(1.3); 
+}
+
+/* ⭐ Message Reaction Display - WhatsApp වගේ විශාල පෙනුමක් සඳහා යාවත්කාලීන කරන ලදී */
+.reaction-container {
+    position: absolute;
+    bottom: -12px; 
+    right: 0px;  
+    background: #fff;
+    border: 1px solid #ddd; 
+    border-radius: 12px; 
+    padding: 2px 6px;
+    font-size: 14px; 
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    line-height: 1.2; 
+    pointer-events: all; 
+    cursor: pointer;
+    transition: transform 0.1s;
+    display: flex; 
+    align-items: center;
+}
+.reaction-container:hover {
+    transform: translateY(-3px) scale(1.05); 
+}
+
+/* ⭐ Reaction Count - Reaction Bubble එක ඇතුළත ඇති count එක */
+.reaction-count {
+    color: #000;
+    font-size: 10px; 
+    margin-left: 2px;
+    font-weight: bold;
+    min-width: 10px; 
+    text-align: center;
+}
+/* ✨ Magic Bubble Styles */
+#magicBubble {
+  position: fixed;
+  top: 112px; /* Image Bubble (60px) + Gap */
+  right: 8px; /* Image Bubble එක කෙලින්ම පහලින් */
+  background: #9c27b0; /* Purple color */
+  color: #fff;
+  font-size: 22px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 215;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease;
+}
+#magicBubble:hover { transform: scale(1.1) rotate(15deg); }
+
+/* ✨ Magic Popup Styles */
+#magicPopup {
+  display: none;
+  position: fixed;
+  top: 160px;
+  right: 8px;
+  background: #111;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  width: 200px;
+  /* 🆕 New additions for scrolling */
+  max-height: 400px; /* උපරිම උස 400px */
+  overflow-y: auto; /* scrollable කරන්න */
+  /* 🆕 End New additions */
+  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  z-index: 225;
+}
+#magicPopup h3 { margin: 0 0 10px; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+
+.magicRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 5px;
+  background: #222;
+  border-radius: 5px;
+}
+.magicToggleBtn {
+  border: none;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+/* ❄️ Snow Animation */
+.effect-layer {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
+  
+  display: none; 
+}
+.snowflake {
+  position: absolute;
+  top: -10px;
+  color: #fff;
+  user-select: none;
+  animation: fall linear infinite;
+}
+
+/* 🧚 Fireflies Animation */
+.firefly {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #ffff00;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ffff00;
+  animation: fly 10s infinite linear;
+  opacity: 0;
+}
+@keyframes fly {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translate(100px, -100px); opacity: 0; }
+}
+
+/* 🎉 Confetti Animation */
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #f00;
+  animation: fall linear infinite;
+}
+/* 🌸 Sakura (Flower Petals) */
+.sakura-petal {
+  position: absolute;
+  background: #ffc0cb; /* Pink */
+  border-radius: 100% 0 100% 0;
+  opacity: 0.8;
+  animation: swayFall linear infinite;
+}
+@keyframes swayFall {
+  0% { transform: translate(0, -10px) rotate(0deg); }
+  50% { transform: translate(50px, 50vh) rotate(180deg); }
+  100% { transform: translate(-50px, 100vh) rotate(360deg); }
+}
+
+/* 🫧 Bubbles */
+.soap-bubble {
+  position: absolute;
+  bottom: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.1) 60%, rgba(255, 255, 255, 0.05) 100%);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+  animation: riseUp linear infinite;
+}
+@keyframes riseUp {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+}
+
+/* ✨ Golden Dust */
+.gold-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #ffd700;
+  border-radius: 50%;
+  box-shadow: 0 0 5px #ffd700;
+  animation: twinkleFloat linear infinite;
+}
+@keyframes twinkleFloat {
+  0% { transform: translateY(0); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(-100px); opacity: 0; }
+}
+/* 💻 Matrix Rain */
+.matrix-stream {
+  position: absolute;
+  color: #0f0;
+  font-family: monospace;
+  font-size: 14px;
+  writing-mode: vertical-rl; /* අකුරු පහලට */
+  text-orientation: upright;
+  opacity: 0.8;
+  animation: matrixFall linear infinite;
+  text-shadow: 0 0 5px #0f0;
+}
+@keyframes matrixFall {
+  from { transform: translateY(-100vh); }
+  to { transform: translateY(100vh); }
+}
+
+/* ❤️ Floating Hearts */
+.float-heart {
+  position: absolute;
+  bottom: -20px;
+  font-size: 20px;
+  animation: floatUpLove linear infinite;
+}
+@keyframes floatUpLove {
+  0% { transform: translateY(0) scale(0.8); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-100vh) scale(1.2); opacity: 0; }
+}
+
+/* 🎈 Balloons */
+.balloon-anim {
+  position: absolute;
+  bottom: -50px;
+  width: 30px;
+  height: 40px;
+  border-radius: 50%;
+  background: red;
+  box-shadow: inset -5px -5px 10px rgba(0,0,0,0.2);
+  animation: riseWobble linear infinite;
+}
+/* බැලුන් එකේ නූල */
+.balloon-anim::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  width: 2px;
+  height: 15px;
+  background: #fff;
+}
+@keyframes riseWobble {
+  0% { transform: translateY(0) translateX(0); }
+  25% { transform: translateY(-25vh) translateX(15px); }
+  50% { transform: translateY(-50vh) translateX(-15px); }
+  75% { transform: translateY(-75vh) translateX(10px); }
+  100% { transform: translateY(-110vh) translateX(0); }
+}
+/* Starry Night ⭐ */
+.star-twinkle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 5px #fff;
+  animation: twinkle 3s infinite alternate ease-in-out;
+}
+@keyframes twinkle {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.5); opacity: 1; }
+}
+
+/* Ghost Trail 👻 */
+.ghost-orb {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: rgba(135, 206, 250, 0.5); /* Light Blue */
+  box-shadow: 0 0 15px rgba(135, 206, 250, 0.8);
+  animation: floatDown 8s linear infinite;
+}
+@keyframes floatDown {
+  0% { transform: translateY(-10vh); opacity: 0; }
+  10% { opacity: 0.7; }
+  90% { opacity: 0.7; }
+  100% { transform: translateY(110vh); opacity: 0; }
+}
+/* ⚡ Electric Sparkles */
+.sparkle-orb {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #00ffff, #8a2be2); /* Cyan and BlueViolet mix */
+  box-shadow: 0 0 12px #00ffff, 0 0 8px #8a2be2;
+  animation: flickerFade 1s linear infinite;
+}
+
+@keyframes flickerFade {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0; }
+}
+/* ✒️ Font Bubble Styles */
+#fontBubble {
+  position: fixed;
+  top: 164px; /* Magic Bubble (112px) + 52px (Love Bubble Size + Gap) */
+  right: 8px; /* Magic Bubble එක කෙලින්ම පහලින් */
+  background: #00bcd4; /* Cyan color */
+  color: #fff;
+  font-size: 22px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 215;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease;
+   display: none; 
+}
+#fontBubble:hover { transform: scale(1.1); }
+
+/* ✒️ Font Popup Styles */
+#fontPopup {
+  display: none;
+  position: fixed;
+  top: 212px; /* Bubble එකට යටින් */
+  right: 8px;
+  background: #111;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  width: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  z-index: 225;
+}
+#fontPopup h3 { margin: 0 0 10px; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+
+.fontRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 5px;
+  background: #222;
+  border-radius: 5px;
+}
+.fontToggleBtn {
+  border: none;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+/* 📝 Font CSS Variables - මෙය Root එකට දමනු ලබන font family එකයි */
+body { 
+    /* ... (වෙනත් Styles) ... */
+    font-family: var(--chat-font-family, Arial, sans-serif); 
+    transition: background 1s ease; 
+}
+/* ❤️ Romance Text Effect (I Love You) - අවසන් යාවත්කාලීන කිරීම */
+.romance-text {
+  position: absolute;
+  /* font-family එක JS වලින් අහඹු ලෙස සකසයි */
+  font-weight: bold;
+  
+  /* Glow Effect */
+  text-shadow: 
+    0 0 5px rgba(255, 255, 255, 0.9), 
+    0 0 15px #ff69b4, /* Hot Pink Glow */
+    0 0 25px #ffc0cb; /* Soft Pink Outer Glow */
+    
+  user-select: none;
+  animation: floatUpRomanceNew 7s linear infinite; 
+  z-index: 6; 
+  transform: rotate(-5deg); 
+  opacity: 0; 
+  
+  /* වචන පේළි දෙකකට කැඩීම වළක්වයි */
+  white-space: nowrap; 
+}
+
+/* ❤️ Animation Keyframes - පෙර පරිදිම පවතී */
+@keyframes floatUpRomanceNew {
+  0% { 
+    transform: translateY(110vh) scale(0.6) rotate(-5deg); 
+    opacity: 0; 
+  }
+  15% { 
+    opacity: 1; 
+  }
+  50% { 
+    transform: translateY(50vh) scale(1) rotate(5deg) translateX(15px); 
+  }
+  85% { 
+    opacity: 1; 
+  }
+  100% { 
+    transform: translateY(-10vh) scale(1.2) rotate(-5deg); 
+    opacity: 0; 
+  }
+}
+
+
+
+/* 🎵 Music Notes Effect */
+.music-note {
+  position: absolute;
+  color: #ba55d3; /* Medium Orchid */
+  font-size: 24px;
+  user-select: none;
+  animation: floatMusic linear infinite;
+  text-shadow: 0 0 5px #fff;
+}
+
+@keyframes floatMusic {
+  0% { transform: translateY(110vh) rotate(0deg) translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(-10vh) rotate(360deg) translateX(50px); opacity: 0; }
+}
+
+/* 🌧️ Rain Effect */
+.rain-drop {
+  position: absolute;
+  background: rgba(174, 194, 224, 0.6);
+  width: 2px;
+  height: 15px;
+  top: -20px;
+  animation: fallRain linear infinite;
+}
+
+@keyframes fallRain {
+  to { transform: translateY(110vh); }
+}
+/* ⚡ Realistic Lightning */
+#lightningFlash {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  display: none; /* JS වලින් පාලනය වේ */
+  transition: opacity 0.05s ease-out; /* ඉතා වේගවත් flash එකක් */
+}
+
+#lightningCanvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  display: none;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="loginPage">
+<h1>Login</h1>
+<input id="password" type="password" placeholder="Enter Password" style="padding:10px; width:80%; border-radius:5px; border:none; margin-bottom:12px;">
+<button id="loginBtn" style="padding:10px; width:80%; background:#0066ff; color:#fff; border:none; border-radius:5px; cursor:pointer;">Login</button>
+<p id="errorMsg" style="color:red; display:none; margin-top:10px;">Invalid password! Please try again.</p>
+</div>
+
+<!-- Chat UI -->
+<div id="onlineUsers">Online Users: Loading...</div>
+<div id="messages"></div>
+<div id="typingIndicator"><span id="typingUser"></span><span class="typing-text">is typing</span></div>
+
+<!-- Last seen -->
+<div id="lastSeenBubble" title="View last seen">🕒</div>
+<div id="lastSeenPopup">
+<h3>Last Seen</h3>
+<div id="lastSeenList">Loading...</div>
+</div>
+
+<!-- Image bubble -->
+<div id="imageBubble" title="Open website">🖼️</div>
+<div id="imagePopup">
+<button id="imagePopupClose">×</button>
+<iframe src="https://blackwizard80.github.io/img/"></iframe>
+</div>
+
+<!-- Love Bubble -->
+<div id="loveBubble" title="Emoji Rain">👩‍❤️‍👨</div>
+
+<!-- Emoji Popup -->
+<div id="emojiPopup">
+  <h3>Emoji Rain</h3>
+  <div id="emojiListContainer"></div>
+</div>
+
+<!-- Emoji Rain Container -->
+<div id="emojiRainContainer"></div>
+<div id="themeBubble" title="Change Theme">🎨</div>
+<div id="reactionPopup">
+  <span class="reaction-emoji" data-reaction="👍">👍</span>
+  <span class="reaction-emoji" data-reaction="❤️">❤️</span>
+  <span class="reaction-emoji" data-reaction="😂">😂</span>
+  <span class="reaction-emoji" data-reaction="😮">😮</span>
+  <span class="reaction-emoji" data-reaction="😢">😢</span>
+  <span class="reaction-emoji" data-reaction="🙏">🙏</span>
+</div>
+
+<div id="themePopup">
+  <h3>Select Theme</h3>
+  <div id="colorThemeList"></div>
+</div>
+<div id="magicBubble" title="Global Effects">✨</div>
+
+<div id="magicPopup">
+  <h3>Global Effects</h3>
+  <div id="magicList"></div>
+</div>
+
+<div id="snowContainer" class="effect-layer"></div>
+<div id="fireflyContainer" class="effect-layer"></div>
+<div id="confettiContainer" class="effect-layer"
+></div><div id="sakuraContainer" class="effect-layer"></div>
+<div id="bubbleContainer" class="effect-layer"></div>
+<div id="goldDustContainer" class="effect-layer"></div>
+<div id="matrixContainer" class="effect-layer"></div>
+<div id="heartContainer" class="effect-layer"></div>
+<div id="balloonContainer" class="effect-layer"></div>
+<div id="sparkleContainer" class="effect-layer"></div>
+<div id="romanceContainer" class="effect-layer"></div>
+<div id="musicContainer" class="effect-layer"></div>
+<div id="rainContainer" class="effect-layer"></div>
+<div id="lightningFlash" class="effect-layer" style="background: #fff; opacity: 0; z-index: 999;"></div>
+<canvas id="lightningCanvas" class="effect-layer" style="z-index: 998;"></canvas>
+
+<div id="fontBubble" title="Change Global Font">✒️</div>
+
+<div id="fontPopup">
+  <h3>Select Global Font</h3>
+  <div id="fontList"></div>
+</div>
+
+
+<!-- Send Message -->
+<div id="sendMsg">
+<div id="replyContext">
+Replying to: <span id="replyMsg"></span>
+<button id="cancelReply" style="background:#ff4d4d; border:none; color:#fff; padding:5px; border-radius:5px; float:right;">Cancel</button>
+</div>
+<input id="msgTxt" type="text" placeholder="Type your message here..." />
+<div style="display:flex; width:100%;">
+<button id="msgBtn">Send</button>
+<button id="imgUploadBtn">Upload Image</button>
+<button id="startRec">🎤</button>
+<button id="stopRec">⏹</button>
+</div>
+<input id="imgUpload" type="file" accept="image/*" style="display:none;">
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+    import {
+      getDatabase, ref, set, remove, onChildAdded, onChildRemoved,
+      onValue, onDisconnect, get, query, orderByKey, limitToLast, endAt
+    } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwiuV6OxyXNK2A7_utfw8UdsuIbAfMgBI",
+      authDomain: "blackhs.firebaseapp.com",
+      databaseURL: "https://blackhs-default-rtdb.firebaseio.com",
+      projectId: "blackhs",
+      storageBucket: "blackhs.appspot.com",
+      messagingSenderId: "849633201387",
+      appId: "1:849633201387:web:facbd767e26664e01142ae"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const loginPage = document.getElementById("loginPage");
+    const loginBtn = document.getElementById("loginBtn");
+    const passwordInput = document.getElementById("password");
+    const errorMsg = document.getElementById("errorMsg");
+    const onlineUsersDiv = document.getElementById("onlineUsers");
+    const messagesDiv = document.getElementById("messages");
+    const msgTxt = document.getElementById("msgTxt");
+    const msgBtn = document.getElementById("msgBtn");
+    const imgUploadBtn = document.getElementById("imgUploadBtn");
+    const imgUpload = document.getElementById("imgUpload");
+    const replyContext = document.getElementById("replyContext");
+    const replyMsg = document.getElementById("replyMsg");
+    const cancelReply = document.getElementById("cancelReply");
+    const startRec = document.getElementById("startRec");
+    const stopRec = document.getElementById("stopRec");
+    const typingIndicator = document.getElementById("typingIndicator");
+    const typingUserSpan = document.getElementById("typingUser");
+    const lastSeenBubble = document.getElementById("lastSeenBubble");
+    const lastSeenPopup = document.getElementById("lastSeenPopup");
+    const lastSeenList = document.getElementById("lastSeenList");
+    const imageBubble = document.getElementById("imageBubble");
+    const imagePopup = document.getElementById("imagePopup");
+    const imagePopupClose = document.getElementById("imagePopupClose");
+    const loveBubble = document.getElementById("loveBubble");
+    const emojiPopup = document.getElementById("emojiPopup");
+    const emojiListContainer = document.getElementById("emojiListContainer");
+    const emojiRainContainer = document.getElementById("emojiRainContainer");   
+    const themeBubble = document.getElementById("themeBubble");
+    const themePopup = document.getElementById("themePopup");
+    const colorThemeList = document.getElementById("colorThemeList");
+    const root = document.documentElement; 
+    
+    // ⭐ Reaction Elements
+    const reactionPopup = document.getElementById("reactionPopup");
+    const reactionEmojis = document.querySelectorAll("#reactionPopup .reaction-emoji");
+
+    let sender = null;
+    let onlineRef = null;
+    let replyTo = null;
+    let oldestKey = null;
+    let loadingOld = false;
+    let mediaRecorder;
+    let audioChunks = [];
+    
+    // ⭐ Reaction State Variables
+    let currentMessageKey = null; 
+    let pressTimer;
+    let messageTarget;
+    let popupTimeout; 
+
+
+    themeBubble.style.display = "none"; 
+    loveBubble.style.display = "none"; 
+    emojiRainContainer.style.display = "none";
+    imageBubble.style.display = "none";
+    onlineUsersDiv.style.display = "none";
+    messagesDiv.style.display = "none";
+    document.getElementById("sendMsg").style.display = "none";
+
+    loginBtn.addEventListener("click", () => {
+      const password = passwordInput.value.trim();
+      const correctPassword = "0759";
+
+      if (password === correctPassword) {
+        loginPage.style.display = "none";
+        onlineUsersDiv.style.display = "block";
+        messagesDiv.style.display = "block";
+        document.getElementById("sendMsg").style.display = "block";
+        themeBubble.style.display = "flex"; 
+        imageBubble.style.display = "flex";
+        loveBubble.style.display = "block"; 
+        emojiRainContainer.style.display = "block";
+        magicBubble.style.display = "flex";
+        fontBubble.style.display = "flex"; 
+        startFontChanger();
+        
+        startMagicEffects();
+
+
+
+        sender = sessionStorage.getItem("sender") || prompt("Enter your name:");
+        sessionStorage.setItem("sender", sender);
+        onlineRef = ref(db, "online/" + sender);
+        set(onlineRef, { name: sender, isTyping: false, isRecording: false });
+
+        // 🕒 Track last seen when user disconnects
+        const lastSeenRef = ref(db, "lastSeen/" + sender);
+        onDisconnect(onlineRef).remove();
+        onDisconnect(lastSeenRef).set(new Date().toLocaleString());
+
+        setupChat();
+        loadInitialMessages();
+      } else {
+        errorMsg.style.display = "block";
+      }
+    });
+
+    function setupChat() {
+      onValue(ref(db, "online"), (snap) => {
+        const users = snap.val() || {};
+        const arr = Object.keys(users).map(k => {
+          const u = users[k];
+          let status = "";
+          if (u.isRecording) {
+            status = ' <span style="color:red;">●</span> recording...';
+          } else if (u.isTyping) {
+            status = ' <span style="color:green;">●</span> typing...';
+          }
+          return u.name + status;
+        });
+        onlineUsersDiv.innerHTML = "Online Users: " + (arr.length ? arr.join(", ") : "None");
+
+        const typingUsers = Object.values(users).filter(u => u.isTyping && u.name !== sender);
+        if (typingUsers.length > 0) {
+          typingUserSpan.textContent = typingUsers[0].name;
+          typingIndicator.style.display = "block";
+        } else {
+          typingIndicator.style.display = "none";
+        }
+      });
+
+      msgTxt.addEventListener("input", () => {
+        if (!onlineRef) return;
+        set(onlineRef, { name: sender, isTyping: msgTxt.value.trim() !== "", isRecording: false });
+      });
+
+      msgBtn.addEventListener("click", () => {
+        const text = msgTxt.value.trim();
+        if (!text) return;
+        const key = Date.now().toString();
+        set(ref(db, "messages/" + key), {
+          sender, msg: text, replyTo, type: "text", time: new Date().toLocaleString()
+        });
+        msgTxt.value = "";
+        replyTo = null;
+        replyContext.style.display = "none";
+        set(onlineRef, { name: sender, isTyping: false, isRecording: false });
+      });
+
+      imgUploadBtn.addEventListener("click", () => imgUpload.click());
+      imgUpload.addEventListener("change", () => {
+        const file = imgUpload.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const key = Date.now().toString();
+          set(ref(db, "messages/" + key), {
+            sender, msg: reader.result, type: "image", time: new Date().toLocaleString()
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+
+      cancelReply.addEventListener("click", () => {
+        replyTo = null;
+        replyContext.style.display = "none";
+      });
+
+      messagesDiv.addEventListener("click", (e) => {
+        if (e.target.classList.contains("delete-btn")) {
+          const key = e.target.getAttribute("data-key");
+          if (confirm("Delete this message?")) remove(ref(db, "messages/" + key));
+        }
+        if (e.target.classList.contains("reply-btn")) {
+          const msg = e.target.getAttribute("data-msg");
+          replyTo = msg;
+          replyMsg.innerText = msg.length > 120 ? msg.slice(0,120) + "..." : msg;
+          replyContext.style.display = "block";
+        }
+      });
+
+      messagesDiv.addEventListener("scroll", () => {
+        if (messagesDiv.scrollTop === 0 && !loadingOld && oldestKey) {
+          loadMoreMessages();
+        }
+      });
+
+      startRec.addEventListener("click", startRecording);
+      stopRec.addEventListener("click", stopRecording);
+
+      // 🕒 Bubble click => show last seen popup
+      lastSeenBubble.addEventListener("click", async () => {
+        if (lastSeenPopup.style.display === "block") {
+          lastSeenPopup.style.display = "none";
+          return;
+        }
+        lastSeenPopup.style.display = "block";
+
+        const snap = await get(ref(db, "lastSeen"));
+        const val = snap.val() || {};
+        if (Object.keys(val).length === 0) {
+          lastSeenList.innerHTML = "<p>No last seen data.</p>";
+          return;
+        }
+
+        // Build list sorted by username
+        let keys = Object.keys(val).sort((a,b)=> a.localeCompare(b));
+        let html = "<ul style='list-style:none;padding:0;margin:0;'>";
+        keys.forEach(u => {
+          html += `<li style='margin-bottom:8px;'><b>${u}</b><br><small>${val[u]}</small></li>`;
+        });
+        html += "</ul>";
+        lastSeenList.innerHTML = html;
+      });
+
+      // Close popup when clicking outside
+      document.addEventListener("click", (e) => {
+        if (!lastSeenPopup.contains(e.target) && e.target !== lastSeenBubble) {
+          lastSeenPopup.style.display = "none";
+        }
+      });
+      
+      // ⭐ NEW Reaction Logic Start
+      
+      // 1. Emoji Reaction Buttons වලට Click Listener එක
+      reactionEmojis.forEach(emojiEl => {
+          emojiEl.addEventListener("click", (e) => {
+              e.stopPropagation(); // Stop event from propagating to document click listener
+              if (currentMessageKey) {
+                  sendReaction(currentMessageKey, emojiEl.getAttribute("data-reaction"));
+              }
+          });
+      });
+
+      // 2. Reaction Popup එක පිටත ක්ලික් කළ විට එය වසා දැමීම
+            // 2. Reaction Popup එක පිටත ක්ලික් කළ විට එය වසා දැමීම
+      document.addEventListener("click", (e) => {
+          if (reactionPopup.style.display === "flex" && !reactionPopup.contains(e.target)) {
+              // Message Bubble එක මත ක්ලික් කිරීම හඳුනාගැනීම
+              if (!e.target.closest(".me, .notMe")) {
+                   reactionPopup.style.display = "none";
+                   // ⭐ NEW: Timeout එක clear කරන්න
+                   clearTimeout(popupTimeout); 
+              }
+          }
+      });
+
+      
+      // 3. Long Press Event Handling (WhatsApp style)
+      messagesDiv.addEventListener("mousedown", handleLongPressStart);
+      messagesDiv.addEventListener("touchstart", handleLongPressStart); // Mobile support
+      messagesDiv.addEventListener("mouseup", handleLongPressEnd);
+      messagesDiv.addEventListener("touchend", handleLongPressEnd);
+      messagesDiv.addEventListener("mousemove", handleLongPressEnd); // If mouse moves, cancel long press
+      messagesDiv.addEventListener("touchmove", handleLongPressEnd);
+      
+      function handleLongPressStart(e) {
+          // Only target message bubbles (me or notMe)
+          const bubble = e.target.closest(".me, .notMe");
+          if (!bubble) return;
+          
+          // Reply, Delete buttons මත long press වීම වැළැක්වීම
+          if (e.target.classList.contains("delete-btn") || e.target.classList.contains("reply-btn")) return;
+          
+          // Reaction Container එක මත long press වීම වැළැක්වීම
+          if (e.target.closest(".reaction-container")) return; 
+
+          messageTarget = bubble;
+
+          // Clear any existing timer
+          clearTimeout(pressTimer);
+          
+                    // 500ms (0.5s) long press delay එකක් සකසන්න
+          pressTimer = setTimeout(() => {
+              
+              // Message Bubble එකේ Key එක සොයා ගැනීම
+              currentMessageKey = messageTarget.closest(".outer").id; 
+
+              // Popup එක පෙන්වයි. CSS මඟින් එය මැදට ගනී.
+              reactionPopup.style.display = "flex"; 
+              
+              // ⭐ NEW: තත්පර 3කට පසු Popup එක ඉබේ වසා දැමීමට Timeout එකක් සකසන්න
+              clearTimeout(popupTimeout); // කලින් තිබූ timeout එකක් ඇත්නම් clear කරන්න
+              popupTimeout = setTimeout(() => {
+                  reactionPopup.style.display = "none";
+              }, 3000); // 3000ms = තත්පර 3
+              
+          }, 500); 
+
+      }
+
+      function handleLongPressEnd() {
+          clearTimeout(pressTimer);
+      }
+      // ⭐ NEW Reaction Logic End
+      
+    }
+
+    // ⭐ NEW Function: Send Reaction
+    function sendReaction(messageKey, emoji) {
+        if (!sender) return;
+              // 2. Reaction Popup එක පිටත ක්ලික් කළ විට එය වසා දැමීම
+      document.addEventListener("click", (e) => {
+          if (reactionPopup.style.display === "flex" && !reactionPopup.contains(e.target)) {
+              // Message Bubble එක මත ක්ලික් කිරීම හඳුනාගැනීම
+              if (!e.target.closest(".me, .notMe")) {
+                   reactionPopup.style.display = "none";
+              }
+          }
+      });
+
+        
+        // Reaction එක ගබඩා කරන්නේ 'reactions/messageKey/sender' යටතේය
+        const reactionRef = ref(db, "reactions/" + messageKey + "/" + sender);
+        
+        // දැනටමත් එම emoji එකම reaction එකක් ලෙස දී ඇත්නම්, එය ඉවත් කරන්න (Un-react)
+        get(reactionRef).then(snap => {
+            if (snap.exists() && snap.val().emoji === emoji) {
+                remove(reactionRef);
+            } else {
+                // නැතිනම් නව reaction එක සකසන්න
+                set(reactionRef, { emoji: emoji, user: sender });
+            }
+        });
+        reactionPopup.style.display = "none";
+    }
+
+    function renderMessageAppend(key, data) {
+      if (document.getElementById(key)) return;
+      const isMe = data.sender === sender;
+      const container = document.createElement("div");
+      container.className = "outer";
+      container.id = key;
+      const inner = document.createElement("div");
+      inner.className = isMe ? "me" : "notMe";
+      
+      // Reaction container එකට නිවැරදිව ස්ථානගත වීමට
+      inner.style.position = "relative"; 
+
+      if (data.replyTo) {
+        const r = document.createElement("div");
+        r.style.fontSize = "0.9em";
+        r.style.color = "#aaa";
+        r.textContent = "Replying to: " + data.replyTo;
+        inner.appendChild(r);
+      }
+
+      const name = document.createElement("div");
+      name.innerHTML = `<b>${data.sender}</b>`;
+      inner.appendChild(name);
+
+      if (data.type === "image") {
+        const img = document.createElement("img");
+        img.src = data.msg;
+        img.className = "imageMsg";
+        inner.appendChild(img);
+      } else if (data.type === "audio") {
+        const audio = document.createElement("audio");
+        audio.controls = true;
+        audio.src = data.msg;
+        inner.appendChild(audio);
+        inner.classList.add("mediaMsgPulse");
+      } else {
+        const msgdiv = document.createElement("div");
+        msgdiv.innerHTML = data.msg;
+        inner.appendChild(msgdiv);
+      }
+
+      const tdiv = document.createElement("div");
+      tdiv.className = "time";
+      tdiv.textContent = data.time || "";
+      inner.appendChild(tdiv);
+
+      const controls = document.createElement("div");
+      if (isMe) {
+        const del = document.createElement("button");
+        del.className = "delete-btn";
+        del.setAttribute("data-key", key);
+        del.textContent = "Delete";
+        controls.appendChild(del);
+      }
+      const rep = document.createElement("button");
+      rep.className = "reply-btn";
+      rep.setAttribute("data-msg", data.msg);
+      rep.textContent = "Reply";
+      controls.appendChild(rep);
+
+      inner.appendChild(controls);
+      container.appendChild(inner);
+      messagesDiv.appendChild(container);
+
+      // ⭐ NEW Reaction Display Logic
+      const reactionDisplayRef = ref(db, "reactions/" + key);
+      onValue(reactionDisplayRef, (snap) => {
+          const reactions = snap.val() || {};
+          const reactionKeys = Object.keys(reactions);
+          
+          // දැනටමත් පවතින reaction container ඉවත් කරන්න
+          let existingReaction = inner.querySelector(".reaction-container");
+          if (existingReaction) {
+              existingReaction.remove();
+          }
+
+          if (reactionKeys.length > 0) {
+              // සියලුම reactions ගණනය කර, වැඩිම reactions සංඛ්‍යාවක් ඇති emoji එක සොයා ගන්න
+              const emojiCounts = reactionKeys.reduce((acc, user) => {
+                  const emoji = reactions[user].emoji;
+                  acc[emoji] = (acc[emoji] || 0) + 1;
+                  return acc;
+              }, {});
+              
+              let topEmoji = null;
+              let maxCount = 0;
+              
+              for (const emoji in emojiCounts) {
+                  if (emojiCounts[emoji] > maxCount) {
+                      maxCount = emojiCounts[emoji];
+                      topEmoji = emoji;
+                  }
+              }
+              
+              if (topEmoji) {
+                  const reactionContainer = document.createElement("div");
+                  reactionContainer.className = "reaction-container";
+                  
+                  // Emoji එක සහ count එක පෙන්වයි
+                  reactionContainer.innerHTML = `${topEmoji}<span class="reaction-count">${reactionKeys.length > 1 ? reactionKeys.length : ''}</span>`;
+                  
+                  // Reaction Container එකට Click Event එකක් එකතු කරන්න (වැඩි විස්තර පෙන්වීමට)
+                  reactionContainer.addEventListener("click", (e) => {
+                      e.stopPropagation(); // Long press event එක cancel කිරීමට
+                      
+                      // වැඩි විස්තර සඳහා Simple Popup එකක් පෙන්වයි
+                      const userList = reactionKeys.map(userKey => {
+                          const userReaction = reactions[userKey].emoji;
+                          return `${userKey}: ${userReaction}`;
+                      }).join("\n");
+                      
+                      alert(`Reactions on this message:\n\n${userList}`);
+                  });
+                  
+                  inner.appendChild(reactionContainer);
+              }
+          }
+      });
+      // ⭐ End Reaction Display Logic
+    }
+
+    async function loadInitialMessages() {
+      const q = query(ref(db, "messages"), orderByKey(), limitToLast(10));
+      const snap = await get(q);
+      let arr = [];
+      snap.forEach(child => arr.push({ key: child.key, val: child.val() }));
+      arr.reverse();
+
+      if (arr.length > 0) {
+        oldestKey = arr[0].key;
+        arr.forEach(item => renderMessageAppend(item.key, item.val));
+        setTimeout(() => {
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }, 50);
+      }
+
+      const messagesRef = ref(db, "messages");
+      onChildAdded(messagesRef, (child) => {
+        if (!document.getElementById(child.key)) {
+          renderMessageAppend(child.key, child.val());
+          setTimeout(() => {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          }, 30);
+        }
+      });
+
+      onChildRemoved(messagesRef, (child) => {
+        const el = document.getElementById(child.key);
+        if (el) el.remove();
+      });
+    }
+
+    async function loadMoreMessages() {
+      if (!oldestKey) return;
+      loadingOld = true;
+      try {
+        const q = query(ref(db, "messages"), orderByKey(), endAt(oldestKey), limitToLast(6));
+        const snap = await get(q);
+        let msgs = [];
+        snap.forEach(child => {
+          if (child.key !== oldestKey) msgs.push({ key: child.key, val: child.val() });
+        });
+        if (msgs.length > 0) {
+          const newOldestKey = msgs[0].key;
+          const prevScrollHeight = messagesDiv.scrollHeight;
+          // render at top: we'll insert before first child for older ordering
+          msgs.reverse().forEach(m => {
+            if (!document.getElementById(m.key)) {
+              const isMe = m.val.sender === sender;
+              const container = document.createElement("div");
+              container.className = "outer";
+              container.id = m.key;
+              const inner = document.createElement("div");
+              inner.className = isMe ? "me" : "notMe";
+              
+              inner.style.position = "relative"; // Reaction container එකට අවශ්‍යයි
+
+              if (m.val.replyTo) {
+                const r = document.createElement("div");
+                r.style.fontSize = "0.9em";
+                r.style.color = "#aaa";
+                r.textContent = "Replying to: " + m.val.replyTo;
+                inner.appendChild(r);
+              }
+
+              const name = document.createElement("div");
+              name.innerHTML = `<b>${m.val.sender}</b>`;
+              inner.appendChild(name);
+
+              if (m.val.type === "image") {
+                const img = document.createElement("img");
+                img.src = m.val.msg;
+                img.className = "imageMsg";
+                inner.appendChild(img);
+                inner.classList.add("mediaMsgPulse"); 
+              } else if (m.val.type === "audio") {
+                const audio = document.createElement("audio");
+                audio.controls = true;
+                audio.src = m.val.msg;
+                inner.appendChild(audio);
+              } else {
+                const msgdiv = document.createElement("div");
+                msgdiv.innerHTML = m.val.msg;
+                inner.appendChild(msgdiv);
+              }
+
+              const tdiv = document.createElement("div");
+              tdiv.className = "time";
+              tdiv.textContent = m.val.time || "";
+              inner.appendChild(tdiv);
+
+              const controls = document.createElement("div");
+              if (isMe) {
+                const del = document.createElement("button");
+                del.className = "delete-btn";
+                del.setAttribute("data-key", m.key);
+                del.textContent = "Delete";
+                controls.appendChild(del);
+              }
+              const rep = document.createElement("button");
+              rep.className = "reply-btn";
+              rep.setAttribute("data-msg", m.val.msg);
+              rep.textContent = "Reply";
+              controls.appendChild(rep);
+
+              inner.appendChild(controls);
+              container.appendChild(inner);
+
+              if (messagesDiv.firstChild) messagesDiv.insertBefore(container, messagesDiv.firstChild);
+              else messagesDiv.appendChild(container);
+              
+              // New: Old messages වලටත් reaction listener එක එකතු කරන්න (renderMessageAppend තුළම onValue තිබෙන නිසා)
+              // Note: When inserting older messages, the logic in renderMessageAppend takes care of adding the reaction listener.
+            }
+          });
+          messagesDiv.scrollTop = messagesDiv.scrollHeight - prevScrollHeight;
+          oldestKey = newOldestKey;
+        }
+      } finally {
+        loadingOld = false;
+      }
+    }
+
+    async function startRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        let options = { mimeType: "audio/webm;codecs=opus", bitsPerSecond: 128000 };
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options = { mimeType: "audio/mp4", bitsPerSecond: 128000 };
+        }
+
+        mediaRecorder = new MediaRecorder(stream, options);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(audioChunks, { type: options.mimeType });
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64Audio = reader.result;
+            const key = Date.now().toString();
+            set(ref(db, "messages/" + key), {
+              sender, msg: base64Audio, type: "audio", time: new Date().toLocaleString()
+            });
+            set(onlineRef, { name: sender, isTyping: false, isRecording: false });
+          };
+          reader.readAsDataURL(blob);
+        };
+        mediaRecorder.start();
+        set(onlineRef, { name: sender, isTyping: false, isRecording: true });
+      } catch (err) {
+        console.error("Recording error:", err);
+        alert("Cannot start recording: " + (err.message || err));
+      }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+    }
+
+// ===== Add Image Bubble Functionality =====
+
+
+imageBubble.addEventListener("click", () => {
+imagePopup.style.display = imagePopup.style.display === "block" ? "none" : "block";
+});
+imagePopupClose.addEventListener("click", () => {
+imagePopup.style.display = "none";
+});
+
+// Optional: click outside to close popup
+document.addEventListener("click", (e) => {
+if (!imagePopup.contains(e.target) && e.target !== imageBubble) {
+imagePopup.style.display = "none";
+}
+});
+// ===== Emoji Rain Setup =====
+
+
+const emojis = ["❤️‍🩹","🥹","🥺","🥰","😘","🤤","😡","😚","😙","😂","🩷","❤️","🙂","🙄","😒","🫩","💔","🤨","😑","🙃","😌","🩵","💙","💚","💛","🧡"];
+
+// Firebase ref for emoji rain states
+const emojiRainRef = ref(db, "emojiRain");
+
+// Toggle popup
+loveBubble.addEventListener("click", () => {
+  emojiPopup.style.display = emojiPopup.style.display === "block" ? "none" : "block";
+});
+
+// Build emoji list with on/off buttons
+function renderEmojiList(state) {
+  emojiListContainer.innerHTML = "";
+  emojis.forEach(e => {
+    const row = document.createElement("div");
+    row.className = "emojiRow";
+    const span = document.createElement("span");
+    span.textContent = e;
+    const btn = document.createElement("button");
+    btn.className = "emojiBtn";
+    const isOn = state[e] === true;
+    btn.textContent = isOn ? "ON" : "OFF";
+    btn.style.background = isOn ? "#28a745" : "#444";
+
+    btn.addEventListener("click", () => {
+      set(ref(db, "emojiRain/" + e), !isOn);
+    });
+
+    row.appendChild(span);
+    row.appendChild(btn);
+    emojiListContainer.appendChild(row);
+  });
+}
+
+// Initial load & realtime update
+onValue(emojiRainRef, snap => {
+  const val = snap.val() || {};
+  renderEmojiList(val);
+  updateEmojiRain(val);
+});
+
+let activeEmojis = {};
+function updateEmojiRain(state) {
+  activeEmojis = {};
+  for (let e of Object.keys(state)) {
+    if (state[e]) activeEmojis[e] = true;
+  }
+  // Start rain
+  startEmojiRain();
+}
+
+let rainInterval;
+function startEmojiRain() {
+  clearInterval(rainInterval);
+  emojiRainContainer.innerHTML = "";
+
+  const allActive = Object.keys(activeEmojis);
+  if (allActive.length === 0) return;
+
+  rainInterval = setInterval(() => {
+    const e = allActive[Math.floor(Math.random() * allActive.length)];
+    const span = document.createElement("div");
+    span.className = "emojiDrop";
+    span.textContent = e;
+    span.style.left = Math.random() * 100 + "vw";
+    span.style.fontSize = (20 + Math.random() * 20) + "px";
+    span.style.animationDuration = (3 + Math.random() * 4) + "s";
+    emojiRainContainer.appendChild(span);
+
+    setTimeout(() => {
+      span.remove();
+    }, parseFloat(span.style.animationDuration) * 1000);
+  }, 300); // every 300ms drop one emoji
+}
+// ===== Theme System Logic (New) =====
+
+// Themes නිර්වචනය කිරීම
+const themes = [
+    {
+        name: "Dark (Default)",
+        id: "dark",
+        colors: {
+            "--bg-color": "#111",
+            "--text-color": "#fff",
+            "--online-bar-bg": "#444",
+            "--me-bubble-bg": "#0066ff",
+            "--not-me-bubble-bg": "#444",
+            "--reply-text-color": "#ccc",
+            "--input-bg-color": "#fff",
+            "--input-text-color": "#000",
+            "--send-bar-bg": "#aaa",
+            "--button-color": "#444",
+            "--button-hover-color": "#555",
+            "--bubble-shadow": "0 4px 8px rgba(0, 0, 0, 0.4)",
+        }
+    },
+    {
+        name: "Lovely ❤️",
+        id: "lovely",
+        colors: {
+            "--bg-color": "#ffe8f2", 
+            "--text-color": "#333",
+            "--online-bar-bg": "#b36daa", 
+            "--me-bubble-bg": "#ff69b4", 
+            "--not-me-bubble-bg": "#f0f0f0", 
+            "--reply-text-color": "#777",
+            "--input-bg-color": "#fff",
+            "--input-text-color": "#333",
+            "--send-bar-bg": "#ffc1cc",
+            "--button-color": "#ff69b4",
+            "--button-hover-color": "#ff4d9a",
+            "--bubble-shadow": "0 4px 8px rgba(0, 0, 0, 0.2)",
+        }
+    },
+    {
+        name: "Sky ☁️",
+        id: "sky",
+        colors: {
+            "--bg-color": "#e0f7fa", 
+            "--text-color": "#004d40", 
+            "--online-bar-bg": "#1a91bd", 
+            "--me-bubble-bg": "#03a9f4", 
+            "--not-me-bubble-bg": "#cfd8dc", 
+            "--reply-text-color": "#546e7a",
+            "--input-bg-color": "#fff",
+            "--input-text-color": "#000",
+            "--send-bar-bg": "#b2ebf2",
+            "--button-color": "#03a9f4",
+            "--button-hover-color": "#0398db",
+            "--bubble-shadow": "0 4px 8px rgba(0, 0, 0, 0.2)",
+        }
+    },
+    {
+        name: "Forest 🌳",
+        id: "forest",
+        colors: {
+            "--bg-color": "#2e7d32", 
+            "--text-color": "#e8f5e9", 
+            "--online-bar-bg": "#3e9c75", 
+            "--me-bubble-bg": "#aed581", 
+            "--not-me-bubble-bg": "#388e3c", 
+            "--reply-text-color": "#c8e6c9",
+            "--input-bg-color": "#e8f5e9",
+            "--input-text-color": "#000",
+            "--send-bar-bg": "#4caf50",
+            "--button-color": "#aed581",
+            "--button-hover-color": "#9ccc65",
+            "--bubble-shadow": "0 4px 8px rgba(0, 0, 0, 0.3)",
+        }
+    },
+    {
+        name: "WhatsApp 🟢",
+        id: "whatsapp",
+        colors: {
+            "--bg-color": "#ece5dd", 
+            "--text-color": "#000",
+            "--online-bar-bg": "#075e54", 
+            "--me-bubble-bg": "#dcf8c6", 
+            "--not-me-bubble-bg": "#fff", 
+            "--reply-text-color": "#888",
+            "--input-bg-color": "#fff",
+            "--input-text-color": "#000",
+            "--send-bar-bg": "#f0f0f0",
+            "--button-color": "#075e54",
+            "--button-hover-color": "#054a41",
+            "--bubble-shadow": "0 1px 1px rgba(0, 0, 0, 0.1)",
+        }
+    },
+    {
+        name: "Neon 🎆",
+        id: "neon",
+        colors: {
+            "--bg-color": "#0d0128", 
+            "--text-color": "#00ffff", 
+            "--online-bar-bg": "#8a2be2", 
+            "--me-bubble-bg": "#ff1493", 
+            "--not-me-bubble-bg": "#8a2be2", 
+            "--reply-text-color": "#ff00ff", 
+            "--input-bg-color": "#220a46",
+            "--input-text-color": "#00ffff",
+            "--send-bar-bg": "#0d0128",
+            "--button-color": "#ff1493",
+            "--button-hover-color": "#cc0077",
+            "--bubble-shadow": "0 0 15px rgba(255, 20, 147, 0.5)",
+        }
+    },
+        {
+        name: "Gold ✨",
+        id: "gold",
+        colors: {
+            "--bg-color": "#fff8e1",      
+            "--text-color": "#333",       
+            "--online-bar-bg": "#aba72c", 
+            "--me-bubble-bg": "#ffc107",  
+            "--not-me-bubble-bg": "#f5f5f5",
+            "--reply-text-color": "#888",
+            "--input-bg-color": "#fff",
+            "--input-text-color": "#000",
+            "--send-bar-bg": "#ffecb3",
+            "--button-color": "#ffc107",
+            "--button-hover-color": "#ffb300",
+            "--bubble-shadow": "0 4px 8px rgba(0, 0, 0, 0.2)",
+        }
+    },
+    {
+        name: "Ocean 🌊",
+        id: "ocean",
+        colors: {
+            "--bg-color": "#e3f2fd",      
+            "--text-color": "#1565c0",    
+            "--online-bar-bg": "#1a91bd", 
+            "--me-bubble-bg": "#2196f3",  
+            "--not-me-bubble-bg": "#bbdefb",
+            "--reply-text-color": "#64b5f6",
+            "--input-bg-color": "#fff",
+            "--input-text-color": "#000",
+            "--send-bar-bg": "#90caf9",
+            "--button-color": "#2196f3",
+            "--button-hover-color": "#1e88e5",
+            "--bubble-shadow": "0 4px 8px rgba(0, 0, 0, 0.2)",
+        }
+    },
+    {
+        name: "Monochrome ⚫⚪",
+        id: "mono",
+        colors: {
+            "--bg-color": "#f0f0f0",      
+            "--text-color": "#333",       
+            "--online-bar-bg": "#ccc",    
+            "--me-bubble-bg": "#555",     
+            "--not-me-bubble-bg": "#fff", 
+            "--reply-text-color": "#777",
+            "--input-bg-color": "#fff",
+            "--input-text-color": "#000",
+            "--send-bar-bg": "#ddd",
+            "--button-color": "#333",
+            "--button-hover-color": "#444",
+            "--bubble-shadow": "0 1px 3px rgba(0, 0, 0, 0.2)",
+        }
+    },
+        {
+        name: "Telegram 🟦",
+        id: "telegram",
+        colors: {
+            "--bg-color": "#f5f5f5",      
+            "--text-color": "#000",       
+            "--online-bar-bg": "#50a7e5", 
+            "--me-bubble-bg": "#dcf8c6",  
+            "--not-me-bubble-bg": "#fff", 
+            "--reply-text-color": "#888",
+            "--input-bg-color": "#fff",
+            "--input-text-color": "#000",
+            "--send-bar-bg": "#f0f0f0",   
+            "--button-color": "#50a7e5",  
+            "--button-hover-color": "#4096d2",
+            "--bubble-shadow": "0 1px 1px rgba(0, 0, 0, 0.1)",
+        }
+    },
+    {
+        name: "iMessage 🍏",
+        id: "imessage",
+        colors: {
+            "--bg-color": "#f9f9f9",      
+            "--text-color": "#000",       
+            "--online-bar-bg": "#fff",    
+            "--me-bubble-bg": "#59cf3c",  
+            "--not-me-bubble-bg": "#e5e5ea",
+            "--reply-text-color": "#888",
+            "--input-bg-color": "#fff",
+            "--input-text-color": "#000",
+            "--send-bar-bg": "#f9f9f9",
+            "--button-color": "#59cf3c",
+            "--button-hover-color": "#45b82c",
+            "--bubble-shadow": "0 1px 2px rgba(0, 0, 0, 0.05)",
+        }
+    },
+{
+    name: "Synthwave 💜",
+    id: "synthwave",
+    colors: {
+        "--bg-color": "#1a003a",        
+        "--text-color": "#f0f0ff",      
+        "--online-bar-bg": "#5000a6",   
+        "--me-bubble-bg": "#ff0099",    
+        "--not-me-bubble-bg": "#00ffff",  
+        "--reply-text-color": "#ffa500",
+        "--input-bg-color": "#3a0050",  
+        "--input-text-color": "#00ffff",
+        "--send-bar-bg": "#5000a6",
+        "--button-color": "#ff0099",
+        "--button-hover-color": "#cc0077",
+        "--bubble-shadow": "0 0 15px rgba(255, 0, 153, 0.6), 0 0 10px rgba(0, 255, 255, 0.6)",
+    }
+},
+{
+    name: "Cozy Coffee 🤎",
+    id: "coffee",
+    colors: {
+        "--bg-color": "#e0d9c4",        
+        "--text-color": "#3e2723",      
+        "--online-bar-bg": "#795548",   
+        "--me-bubble-bg": "#bcaaa4",    
+        "--not-me-bubble-bg": "#f5f5f5",  
+        "--reply-text-color": "#a1887f",
+        "--input-bg-color": "#fff",     
+        "--input-text-color": "#3e2723",
+        "--send-bar-bg": "#d7ccc8",     
+        "--button-color": "#8d6e63",    
+        "--button-hover-color": "#6d4c41",
+        "--bubble-shadow": "0 2px 4px rgba(0, 0, 0, 0.1)",
+    }
+},
+{
+    name: "Modern Green 🥝",
+    id: "flatgreen",
+    colors: {
+        "--bg-color": "#f1f8e9",        
+        "--text-color": "#2e7d32",      
+        "--online-bar-bg": "#4caf50",   
+        "--me-bubble-bg": "#8bc34a",    
+        "--not-me-bubble-bg": "#fff",     
+        "--reply-text-color": "#aed581",
+        "--input-bg-color": "#fff",
+        "--input-text-color": "#000",
+        "--send-bar-bg": "#e6ee9c",     
+        "--button-color": "#4caf50",
+        "--button-hover-color": "#388e3c",
+        "--bubble-shadow": "0 1px 1px rgba(0, 0, 0, 0.1)",
+    }
+},
+{
+    name: "Retro Wave 📼",
+    id: "retro",
+    colors: {
+        "--bg-color": "#23114a",          // Dark Purple Background
+        "--text-color": "#ff00ff",        // Bright Pink Text
+        "--online-bar-bg": "#4b0082",     // Indigo Header
+        "--me-bubble-bg": "#00ffff",      // Cyan Bubble (Me)
+        "--not-me-bubble-bg": "#9932cc",  // Dark Orchid Bubble (Not Me)
+        "--reply-text-color": "#ffff00",  // Yellow Reply Text
+        "--input-bg-color": "#1a0833",    // Dark Input Field
+        "--input-text-color": "#00ffff",  // Cyan Input Text
+        "--send-bar-bg": "#4b0082",
+        "--button-color": "#ff00ff",      // Bright Pink Button
+        "--button-hover-color": "#cc00cc",
+        "--bubble-shadow": "0 0 10px rgba(0, 255, 255, 0.5)", // Neon Glow
+    }
+},
+{
+    name: "Midnight Forest 🌙",
+    id: "forestnight",
+    colors: {
+        "--bg-color": "#011f26",          // Very Dark Cyan
+        "--text-color": "#c4c7c7",        // Light Gray Text
+        "--online-bar-bg": "#004d40",     // Dark Teal Header
+        "--me-bubble-bg": "#4a7c59",      // Sage Green Bubble
+        "--not-me-bubble-bg": "#002b36",  // Darker Blue/Green Bubble
+        "--reply-text-color": "#8d6e63",  // Brown Reply Text
+        "--input-bg-color": "#f5f5f5",    // Light Input Field
+        "--input-text-color": "#000",
+        "--send-bar-bg": "#004d40",
+        "--button-color": "#aed581",      // Light Green Button
+        "--button-hover-color": "#8cbf6b",
+        "--bubble-shadow": "0 4px 8px rgba(0, 0, 0, 0.4)",
+    }
+},
+{
+    name: "Sunset Glow 🌅",
+    id: "sunset",
+    colors: {
+        "--bg-color": "#fff0f0",          // Very Light Pink Background
+        "--text-color": "#5c1818",        // Dark Red Text
+        "--online-bar-bg": "#ff7043",     // Coral Header
+        "--me-bubble-bg": "#ffb74d",      // Light Orange Bubble (Me)
+        "--not-me-bubble-bg": "#ffebef",  // Creamy White Bubble (Not Me)
+        "--reply-text-color": "#ffab91",  // Light Coral Reply Text
+        "--input-bg-color": "#fff",
+        "--input-text-color": "#000",
+        "--send-bar-bg": "#ff7043",
+        "--button-color": "#f4511e",      // Deep Orange Button
+        "--button-hover-color": "#e64a19",
+        "--bubble-shadow": "0 2px 4px rgba(0, 0, 0, 0.1)",
+    }
+},
+{
+    name: "Hacker Mode 🟢",
+    id: "hacker",
+    colors: {
+        "--bg-color": "#000000",          // Pure Black Background
+        "--text-color": "#00ff00",        // Bright Green Text
+        "--online-bar-bg": "#111111",     // Dark Gray Header
+        "--me-bubble-bg": "#006400",      // Dark Green Bubble (Me)
+        "--not-me-bubble-bg": "#333333",  // Darker Gray Bubble (Not Me)
+        "--reply-text-color": "#00aa00",  // Mid Green Reply Text
+        "--input-bg-color": "#222222",    // Input Field
+        "--input-text-color": "#00ff00",  // Bright Green Input Text
+        "--send-bar-bg": "#111111",
+        "--button-color": "#00ff00",
+        "--button-hover-color": "#00cc00",
+        "--bubble-shadow": "0 0 10px rgba(0, 255, 0, 0.5)", // Green Glow
+    }
+},
+{
+    name: "Royal Blue 💎",
+    id: "royal",
+    colors: {
+        "--bg-color": "#f0f4f8",          // Light Blue-Gray Background
+        "--text-color": "#1a3b58",        // Deep Blue Text
+        "--online-bar-bg": "#2a628f",     // Regal Blue Header
+        "--me-bubble-bg": "#5b92e5",      // Bright Blue Bubble (Me)
+        "--not-me-bubble-bg": "#e3eaf2",  // Very Light Bubble (Not Me)
+        "--reply-text-color": "#8b9dc3",  // Muted Blue Reply Text
+        "--input-bg-color": "#ffffff",
+        "--input-text-color": "#000",
+        "--send-bar-bg": "#2a628f",
+        "--button-color": "#5b92e5",
+        "--button-hover-color": "#4a7ecb",
+        "--bubble-shadow": "0 2px 5px rgba(0, 0, 0, 0.1)",
+    }
+},
+{
+    name: "Pumpkin Spice 🎃",
+    id: "pumpkin",
+    colors: {
+        "--bg-color": "#fcf5e9",          // Creamy Background
+        "--text-color": "#4e342e",        // Dark Brown Text
+        "--online-bar-bg": "#d88b49",     // Muted Orange Header
+        "--me-bubble-bg": "#ff7043",      // Bright Orange Bubble (Me)
+        "--not-me-bubble-bg": "#efebe9",  // Off-White Bubble (Not Me)
+        "--reply-text-color": "#a1887f",  // Brown Reply Text
+        "--input-bg-color": "#ffffff",
+        "--input-text-color": "#000",
+        "--send-bar-bg": "#d88b49",
+        "--button-color": "#ff7043",
+        "--button-hover-color": "#f4511e",
+        "--bubble-shadow": "0 2px 4px rgba(0, 0, 0, 0.1)",
+    }
+},
+{
+    name: "Pastel Dream 🍦",
+    id: "pastel",
+    colors: {
+        "--bg-color": "#f7fcfb",          // Very Light Mint Background
+        "--text-color": "#4a4a4a",        // Dark Gray Text
+        "--online-bar-bg": "#c8e6c9",     // Light Mint Header
+        "--me-bubble-bg": "#ffcdd2",      // Light Pink Bubble (Me)
+        "--not-me-bubble-bg": "#e1f5fe",  // Light Blue Bubble (Not Me)
+        "--reply-text-color": "#a5d6a7",  // Muted Green Reply Text
+        "--input-bg-color": "#ffffff",
+        "--input-text-color": "#000",
+        "--send-bar-bg": "#c8e6c9",
+        "--button-color": "#ffcdd2",
+        "--button-hover-color": "#ffb7b9",
+        "--bubble-shadow": "0 1px 3px rgba(0, 0, 0, 0.05)",
+    }
+},
+{
+    name: "Deep Space 🚀",
+    id: "space",
+    colors: {
+        "--bg-color": "#0a0a1a",          // Near Black Background
+        "--text-color": "#bbdefb",        // Light Blue Text
+        "--online-bar-bg": "#1c2c5c",     // Dark Navy Header
+        "--me-bubble-bg": "#e91e63",      // Magenta Bubble (Me)
+        "--not-me-bubble-bg": "#3f51b5",  // Indigo Blue Bubble (Not Me)
+        "--reply-text-color": "#8e24aa",  // Purple Reply Text
+        "--input-bg-color": "#111122",    // Very Dark Input Field
+        "--input-text-color": "#bbdefb",  // Light Blue Input Text
+        "--send-bar-bg": "#1c2c5c",
+        "--button-color": "#e91e63",
+        "--button-hover-color": "#c2185b",
+        "--bubble-shadow": "0 0 10px rgba(233, 30, 99, 0.4)", // Magenta Glow
+    }
+},
+{
+    name: "Desert Sand 🌵",
+    id: "desert",
+    colors: {
+        "--bg-color": "#fafafa",          // Off-White Background
+        "--text-color": "#4e4540",        // Dark Taupe Text
+        "--online-bar-bg": "#d4a373",     // Muted Tan Header
+        "--me-bubble-bg": "#f9e0bb",      // Light Sand Bubble (Me)
+        "--not-me-bubble-bg": "#e9ecef",  // Light Gray Bubble (Not Me)
+        "--reply-text-color": "#8e8d8d",  // Gray Reply Text
+        "--input-bg-color": "#ffffff",
+        "--input-text-color": "#000",
+        "--send-bar-bg": "#d4a373",
+        "--button-color": "#a8a29e",      // Stone Gray Button
+        "--button-hover-color": "#8c8784",
+        "--bubble-shadow": "0 1px 3px rgba(0, 0, 0, 0.1)",
+    }
+}
+];
+
+// Default theme එක සකසන්න
+const defaultTheme = themes.find(t => t.id === "dark");
+const themeRef = ref(db, "theme/currentThemeId");
+
+// 🎨 Bubble click => show theme popup
+themeBubble.addEventListener("click", () => {
+    themePopup.style.display = themePopup.style.display === "block" ? "none" : "block";
+});
+
+// Build theme list and handle button clicks
+function renderThemeList(activeThemeId) {
+    colorThemeList.innerHTML = "";
+    themes.forEach(theme => {
+        const row = document.createElement("div");
+        row.className = "colorThemeRow";
+
+        const nameText = document.createElement("span");
+        nameText.textContent = theme.name;
+        
+        const btn = document.createElement("button");
+        btn.className = "themeToggleBtn";
+        
+        const isActive = activeThemeId === theme.id;
+        btn.textContent = isActive ? "ACTIVE" : "SELECT";
+        btn.style.background = isActive ? "#007bff" : "#444";
+        
+        btn.addEventListener("click", () => {
+            if (isActive) {
+                 // දැනට active නම්, Default theme එක සකසන්න
+                set(themeRef, defaultTheme.id);
+            } else {
+                // නව theme එක සකසන්න
+                set(themeRef, theme.id); 
+            }
+            themePopup.style.display = "none";
+        });
+
+        row.appendChild(nameText);
+        row.appendChild(btn);
+        colorThemeList.appendChild(row);
+    });
+}
+
+// Function to apply a theme
+function applyTheme(theme) {
+    if (!theme) theme = defaultTheme;
+    // HTML root element එකේ CSS variables වෙනස් කරන්න
+    for (const [key, value] of Object.entries(theme.colors)) {
+        root.style.setProperty(key, value);
+    }
+}
+
+
+// Real-time theme update from Firebase
+onValue(themeRef, snap => {
+    const activeThemeId = snap.val() || defaultTheme.id; 
+    
+    // 1. Theme Object එක සොයා ගන්න
+    const activeTheme = themes.find(t => t.id === activeThemeId) || defaultTheme;
+
+    // 2. Theme එක apply කරන්න (සියලුම UI elements වල වර්ණ වෙනස් වේ)
+    applyTheme(activeTheme);
+
+    // 3. Popup එක render කරන්න (Active theme එක බැලීමට)
+    renderThemeList(activeThemeId);
+});
+
+// Click outside to close theme popup
+document.addEventListener("click", (e) => {
+    if (themePopup.style.display === "block" && !themePopup.contains(e.target) && e.target !== themeBubble) {
+        themePopup.style.display = "none";
+    }
+});
+    // ... (වෙනත් variables)
+    const magicBubble = document.getElementById("magicBubble");
+    const magicPopup = document.getElementById("magicPopup");
+    const magicList = document.getElementById("magicList");
+    
+    // ✒️ NEW Font Elements
+    const fontBubble = document.getElementById("fontBubble");
+    const fontPopup = document.getElementById("fontPopup");
+    const fontList = document.getElementById("fontList");
+    
+    // Animation Containers
+    const snowContainer = document.getElementById("snowContainer");
+    const fireflyContainer = document.getElementById("fireflyContainer");
+    const confettiContainer = document.getElementById("confettiContainer");
+        const sakuraContainer = document.getElementById("sakuraContainer");
+    const bubbleContainer = document.getElementById("bubbleContainer");
+    const goldDustContainer = document.getElementById("goldDustContainer");
+        const matrixContainer = document.getElementById("matrixContainer");
+    const heartContainer = document.getElementById("heartContainer");
+    const balloonContainer = document.getElementById("balloonContainer");
+     const sparkleContainer = document.getElementById("sparkleContainer");
+         const romanceContainer = document.getElementById("romanceContainer");
+    const musicContainer = document.getElementById("musicContainer");
+    const rainContainer = document.getElementById("rainContainer");
+        const lightningFlash = document.getElementById("lightningFlash");
+    const lightningCanvas = document.getElementById("lightningCanvas");
+    let lightningCtx = lightningCanvas.getContext("2d");
+
+    // Canvas එක Screen එකේ Size එකට හැඩගැස්වීම
+    function resizeCanvas() {
+        lightningCanvas.width = window.innerWidth;
+        lightningCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas(); // ආරම්භයේදී call කරන්න
+
+
+
+
+
+
+    // Default Hidden
+    magicBubble.style.display = "none";
+
+    // ===== Magic Effects Logic =====
+
+    // Available Effects List
+    // ===== Updated Magic Effects List =====
+    const magicEffects = [
+        { id: "snow", name: "Snowfall ❄️", func: toggleSnow },
+        { id: "fireflies", name: "Fireflies 🧚", func: toggleFireflies },
+        { id: "confetti", name: "Confetti 🎉", func: toggleConfetti },
+        { id: "sakura", name: "Sakura 🌸", func: toggleSakura },
+        { id: "bubbles", name: "Bubbles 🫧", func: toggleBubbles },
+        { id: "gold", name: "Gold Dust ✨", func: toggleGoldDust },
+        { id: "matrix", name: "Matrix 💻", func: toggleMatrix },
+        { id: "hearts", name: "Love ❤️", func: toggleHearts },
+        { id: "balloons", name: "Balloons 🎈", func: toggleBalloons },
+        { id: "stars", name: "Starry Night ⭐", func: toggleStars }, 
+        { id: "ghost", name: "Ghost Trail 👻", func: toggleGhost },
+        { id: "sparks", name: "Electric Sparkles ⚡", func: toggleSparks },
+        { id: "romance", name: "I Love You 💕", func: toggleRomance },
+        { id: "music", name: "Music 🎵", func: toggleMusic },
+        { id: "rain", name: "Rain Storm 🌧️", func: toggleRain },
+        { id: "lightning", name: "Thunder Storm ⚡🌩️", func: toggleLightning }, // අලුතින් එකතු කළ කොටස
+    ];
+
+
+    // Firebase Reference
+    const magicRef = ref(db, "globalEffects");
+
+    // Toggle Popup
+    magicBubble.addEventListener("click", () => {
+        magicPopup.style.display = magicPopup.style.display === "block" ? "none" : "block";
+    });
+
+    // Render List & Listen for Updates
+    function startMagicEffects() {
+    // 1. හැංගිලා තියෙන containers ආපහු පේන්න හදනවා
+    document.querySelectorAll('.effect-layer').forEach(el => el.style.display = 'block');
+
+    // 2. Firebase එකෙන් Data අරන් වැඩේ පටන් ගන්නවා
+    onValue(magicRef, (snap) => {
+        const activeEffects = snap.val() || {};
+        renderMagicList(activeEffects); // List එක update කරනවා
+
+        magicEffects.forEach(effect => {
+            const isActive = activeEffects[effect.id] === true;
+            effect.func(isActive); // Effect එක ON/OFF කරනවා
+        });
+    });
+}
+
+
+    function renderMagicList(activeEffects) {
+        magicList.innerHTML = "";
+        magicEffects.forEach(effect => {
+            const row = document.createElement("div");
+            row.className = "magicRow";
+
+            const label = document.createElement("span");
+            label.textContent = effect.name;
+
+            const btn = document.createElement("button");
+            btn.className = "magicToggleBtn";
+            const isOn = activeEffects[effect.id] === true;
+            
+            btn.textContent = isOn ? "ON" : "OFF";
+            btn.style.background = isOn ? "#28a745" : "#555";
+            btn.style.color = "#fff";
+
+            // Click කළ විට Firebase update කරන්න
+            btn.addEventListener("click", () => {
+                set(ref(db, "globalEffects/" + effect.id), !isOn);
+            });
+
+            row.appendChild(label);
+            row.appendChild(btn);
+            magicList.appendChild(row);
+        });
+    }
+
+    // --- Effect Functions ---
+
+    // ===== Updated Magic Effects List =====
+    
+
+    // ===== Updated Magic Effects List (All 9 Effects) =====
+
+    // ... (Firebase Ref සහ Listener වෙනස් කරන්න එපා) ...
+
+    // --- Effect Functions ---
+
+    // 1. Snow ❄️
+    let snowInterval;
+    function toggleSnow(enable) {
+        if (!enable) { clearInterval(snowInterval); if(snowContainer) snowContainer.innerHTML = ""; return; }
+        if (snowContainer && snowContainer.childElementCount > 0) return; 
+        snowInterval = setInterval(() => {
+            if(!snowContainer) return;
+            const d = document.createElement("div"); d.className = "snowflake"; d.textContent = "❄";
+            d.style.left = Math.random() * 100 + "vw"; d.style.fontSize = (10+Math.random()*20)+"px";
+            d.style.animationDuration = (5+Math.random()*5)+"s";
+            snowContainer.appendChild(d); setTimeout(() => d.remove(), 10000);
+        }, 200);
+    }
+
+    // 2. Fireflies 🧚
+    let fireflyInterval;
+    function toggleFireflies(enable) {
+        if (!enable) { clearInterval(fireflyInterval); if(fireflyContainer) fireflyContainer.innerHTML = ""; return; }
+        if (fireflyContainer && fireflyContainer.childElementCount > 0) return;
+        fireflyInterval = setInterval(() => {
+            if(!fireflyContainer) return;
+            const d = document.createElement("div"); d.className = "firefly";
+            d.style.left = Math.random()*100+"vw"; d.style.top = Math.random()*100+"vh";
+            d.animate([{opacity:0},{opacity:1,offset:0.5},{transform:`translate(${(Math.random()-0.5)*200}px, ${(Math.random()-0.5)*200}px)`,opacity:0}], {duration:6000}).onfinish=()=>d.remove();
+            fireflyContainer.appendChild(d);
+        }, 300);
+    }
+
+    // 3. Confetti 🎉
+    let confettiInterval;
+    function toggleConfetti(enable) {
+        if (!enable) { clearInterval(confettiInterval); if(confettiContainer) confettiContainer.innerHTML = ""; return; }
+        if (confettiContainer && confettiContainer.childElementCount > 0) return;
+        const colors = ['#f00','#0f0','#00f','#ff0','#0ff','#f0f'];
+        confettiInterval = setInterval(() => {
+            if(!confettiContainer) return;
+            const d = document.createElement("div"); d.className = "confetti-piece";
+            d.style.left = Math.random()*100+"vw"; d.style.background = colors[Math.floor(Math.random()*6)];
+            d.style.animationDuration = (3+Math.random()*2)+"s";
+            confettiContainer.appendChild(d); setTimeout(() => d.remove(), 5000);
+        }, 100);
+    }
+
+    // 4. Sakura 🌸
+    let sakuraInterval;
+    function toggleSakura(enable) {
+        if (!enable) { clearInterval(sakuraInterval); if(sakuraContainer) sakuraContainer.innerHTML = ""; return; }
+        if (sakuraContainer && sakuraContainer.childElementCount > 0) return;
+        sakuraInterval = setInterval(() => {
+            if(!sakuraContainer) return;
+            const d = document.createElement("div"); d.className = "sakura-petal";
+            d.style.left = Math.random()*100+"vw"; d.style.width = d.style.height = (10+Math.random()*10)+"px";
+            d.style.animationDuration = (4+Math.random()*4)+"s";
+            sakuraContainer.appendChild(d); setTimeout(() => d.remove(), 8000);
+        }, 300);
+    }
+
+    // 5. Bubbles 🫧
+    let bubbleInterval;
+    function toggleBubbles(enable) {
+        if (!enable) { clearInterval(bubbleInterval); if(bubbleContainer) bubbleContainer.innerHTML = ""; return; }
+        if (bubbleContainer && bubbleContainer.childElementCount > 0) return;
+        bubbleInterval = setInterval(() => {
+            if(!bubbleContainer) return;
+            const d = document.createElement("div"); d.className = "soap-bubble";
+            d.style.left = Math.random()*100+"vw"; d.style.width = d.style.height = (15+Math.random()*25)+"px";
+            d.style.animationDuration = (6+Math.random()*5)+"s";
+            bubbleContainer.appendChild(d); setTimeout(() => d.remove(), 11000);
+        }, 400);
+    }
+
+    // 6. Gold Dust ✨
+    let goldInterval;
+    function toggleGoldDust(enable) {
+        if (!enable) { clearInterval(goldInterval); if(goldDustContainer) goldDustContainer.innerHTML = ""; return; }
+        if (goldDustContainer && goldDustContainer.childElementCount > 0) return;
+        goldInterval = setInterval(() => {
+            if(!goldDustContainer) return;
+            const d = document.createElement("div"); d.className = "gold-particle";
+            d.style.left = Math.random()*100+"vw"; d.style.top = Math.random()*100+"vh";
+            d.style.animationDuration = (3+Math.random()*3)+"s";
+            goldDustContainer.appendChild(d); setTimeout(() => d.remove(), 6000);
+        }, 100);
+    }
+
+    // 7. Matrix Rain 💻 (NEW)
+    let matrixInterval;
+    function toggleMatrix(enable) {
+        if (!enable) { clearInterval(matrixInterval); if(matrixContainer) matrixContainer.innerHTML = ""; return; }
+        if (matrixContainer && matrixContainer.childElementCount > 0) return;
+        matrixInterval = setInterval(() => {
+            if(!matrixContainer) return;
+            const d = document.createElement("div"); d.className = "matrix-stream";
+            d.textContent = Math.random().toString(36).substring(2, 10); // Random string
+            d.style.left = Math.random()*100+"vw"; 
+            d.style.fontSize = (12+Math.random()*8)+"px";
+            d.style.animationDuration = (2+Math.random()*3)+"s";
+            matrixContainer.appendChild(d); setTimeout(() => d.remove(), 5000);
+        }, 150);
+    }
+
+    // 8. Hearts ❤️ (NEW)
+    let heartInterval;
+    function toggleHearts(enable) {
+        if (!enable) { clearInterval(heartInterval); if(heartContainer) heartContainer.innerHTML = ""; return; }
+        if (heartContainer && heartContainer.childElementCount > 0) return;
+        heartInterval = setInterval(() => {
+            if(!heartContainer) return;
+            const d = document.createElement("div"); d.className = "float-heart";
+            d.textContent = ["❤️", "💖", "💜", "💕", "😍"][Math.floor(Math.random()*5)];
+            d.style.left = Math.random()*100+"vw"; 
+            d.style.animationDuration = (4+Math.random()*3)+"s";
+            heartContainer.appendChild(d); setTimeout(() => d.remove(), 7000);
+        }, 400);
+    }
+
+    // 9. Balloons 🎈 (NEW)
+    let balloonInterval;
+    function toggleBalloons(enable) {
+        if (!enable) { clearInterval(balloonInterval); if(balloonContainer) balloonContainer.innerHTML = ""; return; }
+        if (balloonContainer && balloonContainer.childElementCount > 0) return;
+        const bColors = ["#ff4d4d", "#4d79ff", "#4dff88", "#ffff4d", "#ff4dff"];
+        balloonInterval = setInterval(() => {
+            if(!balloonContainer) return;
+            const d = document.createElement("div"); d.className = "balloon-anim";
+            d.style.left = Math.random()*100+"vw"; 
+            d.style.background = bColors[Math.floor(Math.random()*bColors.length)];
+            d.style.animationDuration = (6+Math.random()*4)+"s";
+            balloonContainer.appendChild(d); setTimeout(() => d.remove(), 10000);
+        }, 600);
+    }
+    // 10. Starry Night ⭐ (NEW)
+    let starInterval;
+    function toggleStars(enable) {
+        if (!enable) { clearInterval(starInterval); if(snowContainer) snowContainer.innerHTML = ""; return; }
+        if (snowContainer && snowContainer.childElementCount > 0) return; // snowContainer භාවිතා කරන්නේ තරු සඳහායි
+        starInterval = setInterval(() => {
+            if(!snowContainer) return;
+            const d = document.createElement("div"); d.className = "star-twinkle";
+            d.style.left = Math.random() * 100 + "vw"; d.style.top = Math.random() * 100 + "vh";
+            snowContainer.appendChild(d); setTimeout(() => d.remove(), 6000); 
+        }, 300); 
+    }
+
+    // 11. Ghost Trail 👻 (NEW)
+    let ghostInterval;
+    function toggleGhost(enable) {
+        if (!enable) { clearInterval(ghostInterval); if(bubbleContainer) bubbleContainer.innerHTML = ""; return; }
+        if (bubbleContainer && bubbleContainer.childElementCount > 0) return; // bubbleContainer භාවිතා කරන්නේ මේ සඳහායි
+        ghostInterval = setInterval(() => {
+            if(!bubbleContainer) return;
+            const d = document.createElement("div"); d.className = "ghost-orb";
+            d.style.left = Math.random() * 100 + "vw"; 
+            d.style.animationDuration = (8 + Math.random() * 4) + "s";
+            bubbleContainer.appendChild(d); setTimeout(() => d.remove(), 12000); 
+        }, 500); 
+    }
+// 13. Electric Sparkles ⚡
+let sparksInterval;
+function toggleSparks(enable) {
+    if (!enable) { clearInterval(sparksInterval); if(sparkleContainer) sparkleContainer.innerHTML = ""; return; }
+    if (sparkleContainer && sparkleContainer.childElementCount > 0) return;
+    sparksInterval = setInterval(() => {
+        if(!sparkleContainer) return;
+        const d = document.createElement("div"); d.className = "sparkle-orb";
+        d.style.left = Math.random() * 100 + "vw"; 
+        d.style.top = Math.random() * 100 + "vh"; 
+        d.style.animationDuration = (0.8 + Math.random() * 0.4) + "s";
+        sparkleContainer.appendChild(d); setTimeout(() => d.remove(), 1000); 
+    }, 80);
+}
+// 14. Romance Text (I Love You) Effect 💖 - අවසන් යාවත්කාලීන කිරීම
+let romanceInterval;
+
+// රෝස පැහැයට සමාන අහඹු වර්ණ ලැයිස්තුව (Pink/Reddish Tones)
+const PINK_SHADES = [
+    "#FF1493", // Deep Pink
+    "#FF69B4", // Hot Pink
+    "#FFC0CB", // Pink
+    "#DB7093", // Pale Violet Red
+    "#C71585", // Medium Violet Red
+    "#F08080", // Light Coral
+    "#FF7F50"  // Coral
+];
+
+// Google Fonts ලැයිස්තුව
+const ROMANCE_FONTS = [
+    'Pacifico',
+    'Dancing Script',
+    'Great Vibes'
+];
+
+function toggleRomance(enable) {
+    if (!enable) { 
+        clearInterval(romanceInterval); 
+        if(romanceContainer) romanceContainer.innerHTML = ""; 
+        return; 
+    }
+    if (romanceContainer && romanceContainer.childElementCount > 0) return;
+    
+    const loveWords = ["I Love You! 🥰", "Te Amo 💖", "Be Mine ✨", "Sweetheart ❤️", "Mine Princess 💕", "Forever 💍"];
+    
+    // ⭐ යාවත්කාලීන කිරීම: Font size එක 24px දක්වා අඩු කරන ලදී
+    const CONSTANT_FONT_SIZE = "24px"; 
+    
+    const MIN_LEFT_PERCENT = 10;
+    const MAX_LEFT_PERCENT = 80;
+    const RANGE = MAX_LEFT_PERCENT - MIN_LEFT_PERCENT;
+
+    romanceInterval = setInterval(() => {
+        if(!romanceContainer) return; 
+        
+        const d = document.createElement("div"); 
+        d.className = "romance-text";
+        
+        // අහඹු වර්ණයක් තෝරාගෙන apply කරන්න
+        const randomColor = PINK_SHADES[Math.floor(Math.random() * PINK_SHADES.length)];
+        d.style.color = randomColor;
+        
+        // අහඹු font එකක් තෝරාගෙන apply කරන්න
+        const randomFont = ROMANCE_FONTS[Math.floor(Math.random() * ROMANCE_FONTS.length)];
+        d.style.fontFamily = randomFont;
+        
+        d.textContent = loveWords[Math.floor(Math.random() * loveWords.length)];
+        
+        // ⭐ මෙතන 24px අගය යෙදේ
+        d.style.fontSize = CONSTANT_FONT_SIZE;
+        
+        d.style.left = (Math.random() * RANGE) + MIN_LEFT_PERCENT + "vw"; 
+        
+        const duration = 7 + Math.random() * 2; 
+        d.style.animationDuration = duration + "s";
+        
+        romanceContainer.appendChild(d); 
+        
+        setTimeout(() => d.remove(), duration * 1000); 
+    }, 900); 
+}
+
+
+    // 15. Music Notes Effect 🎵
+    let musicInterval;
+    function toggleMusic(enable) {
+        if (!enable) { clearInterval(musicInterval); if(musicContainer) musicContainer.innerHTML = ""; return; }
+        if (musicContainer && musicContainer.childElementCount > 0) return;
+        
+        const notes = ["🎵", "🎶", "🎼", "🎹", "🎷"];
+        
+        musicInterval = setInterval(() => {
+            if(!musicContainer) return;
+            const d = document.createElement("div"); d.className = "music-note";
+            d.textContent = notes[Math.floor(Math.random() * notes.length)];
+            d.style.left = Math.random() * 100 + "vw";
+            d.style.animationDuration = (3 + Math.random() * 3) + "s";
+            musicContainer.appendChild(d); 
+            setTimeout(() => d.remove(), 6000); 
+        }, 400);
+    }
+
+    // 16. Rain Effect 🌧️
+    let weatherRainInterval; // නම වෙනස් කරන ලදී (rainInterval -> weatherRainInterval)
+    function toggleRain(enable) {
+        if (!enable) { 
+            clearInterval(weatherRainInterval); 
+            if(rainContainer) rainContainer.innerHTML = ""; 
+            return; 
+        }
+        if (rainContainer && rainContainer.childElementCount > 0) return;
+        
+        weatherRainInterval = setInterval(() => {
+            if(!rainContainer) return;
+            const d = document.createElement("div"); d.className = "rain-drop";
+            d.style.left = Math.random() * 100 + "vw";
+            d.style.animationDuration = (0.5 + Math.random() * 0.5) + "s"; // වැස්ස වේගවත් කිරීමට
+            d.style.opacity = Math.random();
+            rainContainer.appendChild(d); 
+            setTimeout(() => d.remove(), 1000); 
+        }, 20); 
+    }
+    // 17. Realistic Lightning Storm ⚡🌩️
+    let lightningTimeout;
+
+    function toggleLightning(enable) {
+        if (!enable) {
+            clearTimeout(lightningTimeout);
+            if(lightningFlash) {
+                lightningFlash.style.display = "none";
+                lightningFlash.style.opacity = 0;
+            }
+            if(lightningCanvas) {
+                lightningCanvas.style.display = "none";
+                const ctx = lightningCanvas.getContext("2d");
+                ctx.clearRect(0, 0, lightningCanvas.width, lightningCanvas.height);
+            }
+            return;
+        }
+
+        // Elements පෙන්වන්න
+        lightningFlash.style.display = "block";
+        lightningCanvas.style.display = "block";
+
+        // Loop එක පටන් ගන්න
+        scheduleNextStrike();
+    }
+
+    function scheduleNextStrike() {
+        // අහඹු වේලාවකින් ඊළඟ අකුණ ගසයි (තත්පර 2 සිට 7 දක්වා)
+        const delay = Math.random() * 5000 + 2000;
+        lightningTimeout = setTimeout(() => {
+            triggerLightningStrike();
+            scheduleNextStrike(); // ඊළඟ එකට සූදානම් වන්න
+        }, delay);
+    }
+
+    function triggerLightningStrike() {
+        // 1. Flash Effect (තිරය සුදු වීම)
+        lightningFlash.style.opacity = 0.6 + Math.random() * 0.4; // 0.6 සිට 1.0 දක්වා දීප්තියක්
+        
+        // අකුණු ඉරි ඇඳීම
+        drawLightningBolt();
+
+        // 2. Flash එක නිවී යාම (Flicker effect)
+        setTimeout(() => {
+            lightningFlash.style.opacity = 0;
+        }, 50);
+
+        setTimeout(() => {
+             // පොඩි දෙවැනි එළියක් (Aftershock)
+            if(Math.random() > 0.5) {
+                lightningFlash.style.opacity = 0.3;
+                setTimeout(() => { lightningFlash.style.opacity = 0; }, 50);
+            }
+            // Canvas එක clear කරන්න
+            const ctx = lightningCanvas.getContext("2d");
+            ctx.clearRect(0, 0, lightningCanvas.width, lightningCanvas.height);
+        }, 200);
+    }
+
+    function drawLightningBolt() {
+        const ctx = lightningCanvas.getContext("2d");
+        const width = lightningCanvas.width;
+        const height = lightningCanvas.height;
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)"; // අකුණු පාට
+        ctx.lineWidth = 2 + Math.random() * 2;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#00ffff"; // නිල් පැහැති එළියක් (Glow)
+
+        let x = Math.random() * width; // පටන් ගන්නා තැන (X අක්ෂය)
+        let y = 0; // උඩින්ම පටන් ගනී
+
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+
+        // අකුණ පහළට ගමන් කිරීම
+        while (y < height) {
+            const newX = x + (Math.random() * 40 - 20); // වමට හෝ දකුණට පනිනවා
+            const newY = y + (Math.random() * 20 + 10); // පහළට එනවා
+
+            ctx.lineTo(newX, newY);
+            x = newX;
+            y = newY;
+        }
+        ctx.stroke();
+    }
+
+
+// ===== Font Changer System Logic (New) =====
+
+// Available Fonts List (අලුතින් Google Fonts 5ක් එකතු කර ඇත)
+const availableFonts = [
+    { id: "default", name: "Default (Arial)", css: "Arial, sans-serif" },
+    
+    // ⭐ Google Fonts (කලින් එකතු කළ ඒවා)
+    { id: "roboto", name: "Roboto (Clean) ✨", css: "'Roboto', sans-serif" },
+    { id: "oswald", name: "Oswald (Bold) 📐", css: "'Oswald', sans-serif" },
+    { id: "pacifico", name: "Pacifico (Handwriting) 🖋️", css: "'Pacifico', cursive" },
+    
+    // 🆕 නව Google Fonts 5
+    { id: "merriweather", name: "Merriweather (Slab) 📚", css: "'Merriweather', serif" },
+    { id: "indieflower", name: "Indie Flower (Cute) 🌸", css: "'Indie Flower', cursive" },
+    { id: "bungee", name: "Bungee (Heavy Display) 🛑", css: "'Bungee', cursive" },
+    { id: "lato", name: "Lato (Minimal) 💻", css: "'Lato', sans-serif" },
+    { id: "cinzel", name: "Cinzel (Classic Roman) 🔱", css: "'Cinzel', serif" },
+
+    // Web-Safe Fonts (පැරණි ලැයිස්තුවෙන්)
+    { id: "monospace", name: "Monospace 🖥️", css: "Consolas, 'Courier New', monospace" },
+    { id: "impact", name: "Impact 💥", css: "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif" },
+    { id: "georgia", name: "Georgia 🖋️", css: "Georgia, serif" },
+    { id: "verdana", name: "Verdana 📊", css: "Verdana, Geneva, sans-serif" },
+    { id: "courier", name: "Classic Courier 📠", css: "'Courier', monospace" },
+    { id: "garamond", name: "Garamond 优雅", css: "Garamond, serif" },
+    { id: "tahoma", name: "Tahoma (Clean) ✅", css: "Tahoma, Verdana, Segoe, sans-serif" },
+    { id: "palatino", name: "Palatino 🏛️", css: "'Palatino Linotype', 'Book Antiqua', Palatino, serif" }
+];
+
+
+// Firebase Reference
+const fontRef = ref(db, "globalFonts/activeFontId");
+const defaultFont = availableFonts[0];
+
+
+function startFontChanger() {
+    // ✒️ Bubble click => show font popup
+    fontBubble.addEventListener("click", () => {
+        fontPopup.style.display = fontPopup.style.display === "block" ? "none" : "block";
+    });
+
+    // 1. Initial Load & Real-time update from Firebase
+    onValue(fontRef, snap => {
+        const activeFontId = snap.val() || defaultFont.id; 
+        
+        // 2. Theme Object එක සොයා ගන්න
+        const activeFont = availableFonts.find(f => f.id === activeFontId) || defaultFont;
+
+        // 3. Font එක apply කරන්න (CSS Variable වෙනස් කරන්න)
+        applyFont(activeFont.css);
+
+        // 4. Popup එක render කරන්න
+        renderFontList(activeFontId);
+    });
+
+    // Click outside to close font popup
+    document.addEventListener("click", (e) => {
+        if (fontPopup.style.display === "block" && !fontPopup.contains(e.target) && e.target !== fontBubble) {
+            fontPopup.style.display = "none";
+        }
+    });
+}
+
+
+// Function to apply the font to the body
+function applyFont(fontCSS) {
+    // <body> tag එකේ font-family CSS Variable එක වෙනස් කරන්න
+    root.style.setProperty("--chat-font-family", fontCSS);
+}
+
+
+// Build font list and handle button clicks
+function renderFontList(activeFontId) {
+    fontList.innerHTML = "";
+    availableFonts.forEach(font => {
+        const row = document.createElement("div");
+        row.className = "fontRow";
+
+        const nameText = document.createElement("span");
+        nameText.textContent = font.name;
+        // Preview for the font
+        nameText.style.fontFamily = font.css;
+        
+        const btn = document.createElement("button");
+        btn.className = "fontToggleBtn";
+        
+        const isActive = activeFontId === font.id;
+        btn.textContent = isActive ? "ACTIVE" : "SELECT";
+        btn.style.background = isActive ? "#00bcd4" : "#555"; // Cyan color
+        
+        btn.addEventListener("click", () => {
+            if (isActive) {
+                 // දැනට active නම්, Default font එක සකසන්න
+                set(fontRef, defaultFont.id);
+            } else {
+                // නව font එක සකසන්න
+                set(fontRef, font.id); 
+            }
+            fontPopup.style.display = "none";
+        });
+
+        row.appendChild(nameText);
+        row.appendChild(btn);
+        fontList.appendChild(row);
+    });
+}
+</script>
+
+</body>
+</html>
