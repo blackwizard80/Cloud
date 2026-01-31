@@ -1102,9 +1102,7 @@ document.addEventListener("click", (e) => {
         // ⭐ 5 New Effects
         { id: "fireworks", name: "Fireworks 🎆", func: toggleFireworks },
         { id: "lanterns", name: "Sky Lanterns 🏮", func: toggleLanterns },
-        { id: "ufos", name: "Alien Invasion 🛸", func: toggleUfos },
-        
-        { id: "rainbow", name: "Rainbow Pulse 🌈", func: toggleRainbow }
+        { id: "ufos", name: "Alien Invasion 🛸", func: toggleUfos }
     ];
 
     const magicRef = ref(db, "globalEffects");
@@ -1480,20 +1478,6 @@ document.addEventListener("click", (e) => {
             setTimeout(() => d.remove(), 8000);
         }, 4000);
     }
-
- 
-
-    // ⭐ 5. Rainbow Pulse 🌈
-    let rainbowInterval;
-    function toggleRainbow(enable) {
-        if(!enable) { clearInterval(rainbowInterval); root.style.setProperty("--bg-color", "#111"); return; }
-        let h = 0;
-        rainbowInterval = setInterval(() => {
-            h = (h+1) % 360;
-            root.style.setProperty("--bg-color", `hsl(${h}, 50%, 10%)`);
-        }, 50);
-    }
-
     const availableFonts = [
     { id: "default", name: "Default (Arial)", css: "Arial, sans-serif" },
     { id: "roboto", name: "Roboto (Clean) ✨", css: "'Roboto', sans-serif" },
